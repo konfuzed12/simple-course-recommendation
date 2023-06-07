@@ -1,0 +1,48 @@
+# This Python 3 environment comes with many helpful analytics libraries installed
+# It is defined by the kaggle/python Docker image: https://github.com/kaggle/docker-python
+# For example, here's several helpful packages to load
+
+import numpy as np # linear algebra
+import pandas as pd # data processing, CSV file I/O (e.g. pd.read_csv)
+
+# Input data files are available in the read-only "../input/" directory
+# For example, running this (by clicking run or pressing Shift+Enter) will list all files under the input directory
+
+import os
+for dirname, _, filenames in os.walk('/kaggle/input'):
+    for filename in filenames:
+        print(os.path.join(dirname, filename))
+
+# You can write up to 20GB to the current directory (/kaggle/working/) that gets preserved as output when you create a version using "Save & Run All" 
+# You can also write temporary files to /kaggle/temp/, but they won't be saved outside of the current session
+
+import pandas as pd
+import numpy as np
+from sklearn.feature_extraction.text import TfidfVectorizer
+from sklearn.metrics.pairwise import linear_kernel
+
+df_courses = pd.read_csv('/kaggle/input/courses2/courses.csv')
+df_courses['Categories']
+
+tfidf = TfidfVectorizer(stop_words="english")
+df_courses['Categories'] = df_courses['Categories'].fillna("")
+tfidf_matrix = tfidf.fit_transform(df_courses['Categories'])
+
+cosine_sim = linear_kernel(tfidf_matrix, tfidf_matrix)
+
+def get_recommendations(description, cosine_sim=cosine_sim, data=df_courses):
+    temp = pd.DataFrame({'Categories': [categories]})
+    temp_matrix = tfidf.transform(temp['Categories'])
+    sim_scores = linear_kernel(temp_matrix, tfidf_matrix).flatten()
+    indices = sim_scores.argsort()[:-11:-1]
+    courses = data.iloc[indices]['Courses'].values.tolist()
+    return courses
+
+categories = "Data and Analytics"
+recommended_courses = get_recommendations(categories)
+print(recommended_courses)
+
+categories = "Leadership"
+recommended_courses = get_recommendations(categories)
+print(recommended_courses)
+
